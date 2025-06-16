@@ -1,86 +1,55 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 public class Main {
     public static void main(String[] args) {
-        try {
-            Scanner scanner = new Scanner(System.in);
+        List<Set<String>> database = loadDatabase("mushrooms.txt");
 
-            // 1. Nhập số lượng transaction
-            System.out.print("Nhập số lượng transaction: ");
-            int numTransactions = scanner.nextInt();
-            scanner.nextLine(); // Consume newline
-            
-            // 2. Tạo database từ input người dùng
-            List<Set<String>> database = new ArrayList<>();
-            
-            for (int i = 0; i < numTransactions; i++) {
-                System.out.print("Nhập số lượng items cho transaction " + (i + 1) + ": ");
-                int numItems = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
-                
-                Set<String> transaction = new HashSet<>();
-                System.out.println("Nhập " + numItems + " items cho transaction " + (i + 1) + 
-                                 " (có thể nhập cả chữ và số, cách nhau bởi dấu cách):");
-                
-                String[] items = scanner.nextLine().trim().split("\\s+");
-                for (int j = 0; j < Math.min(numItems, items.length); j++) {
-                    transaction.add(items[j]);
-                }
-                database.add(transaction);
+        // Chỉ tạo BitMatrix 1 lần cho Jaccard
+        JaccardSimilarity jaccard = new JaccardSimilarity(database);
+        DiceSimilarity dice = new DiceSimilarity();
+        KulczynskiSimilarity kulc = new KulczynskiSimilarity();
+
+        List<SimilarityMeasure> measures = Arrays.asList(jaccard, dice, kulc);
+        List<String> names = Arrays.asList("Jaccard", "Dice", "Kulczynski");
+
+        double[] minSups = {0.005, 0.006, 0.007, 0.008, 0.009, 0.01};
+        double minSim = 0.3;
+
+        for (int i = 0; i < measures.size(); i++) {
+            SimilarityMeasure sim = measures.get(i);
+            String name = names.get(i);
+            System.out.println("\n▶ Similarity: " + name);
+            System.out.printf("%-8s %-12s %-18s %-12s\n", "minSup", "runtime(ms)", "closedPatterns", "filtered");
+
+            for (double minSupRatio : minSups) {
+                int absSup = (int) Math.ceil(minSupRatio * database.size());
+
+                long start = System.currentTimeMillis();
+                ClosedPatternMining miner = new ClosedPatternMining(absSup);
+                Set<Set<String>> closed = miner.run(database);
+                List<Set<String>> filtered = SimilarityChecker.checkSimilarity(closed, minSim, sim);
+                long end = System.currentTimeMillis();
+
+                System.out.printf("%-8.3f %-12d %-18d %-12d\n", minSupRatio, end - start, closed.size(), filtered.size());
             }
-
-            // In database đã nhập
-            System.out.println("\nDatabase đã nhập:");
-            printDatabase(database);
-
-            // 3. Nhập minimum support
-            System.out.print("\nNhập minimum support (minSup): ");
-            int minSup = scanner.nextInt();
-            
-            // 4. Chạy thuật toán DCI-Closed
-            ClosedPatternMining miner = new ClosedPatternMining(minSup);
-            Set<Set<String>> closedPatterns = miner.DCIClosed(database);
-
-            // In kết quả closed patterns
-            System.out.println("\nClosed Patterns tìm được:");
-            printPatterns(closedPatterns);
-
-            // 5. Nhập và kiểm tra similarity
-            System.out.print("\nNhập ngưỡng similarity (0.0 - 1.0): ");
-            double minSim = scanner.nextDouble();
-            
-            List<Set<String>> filteredPatterns = SimilarityChecker.checkSimilarity(closedPatterns, minSim);
-
-            // In kết quả sau khi lọc
-            System.out.println("\nPatterns sau khi lọc similarity:");
-            printPatterns(filteredPatterns);
-
-            scanner.close();
-
-        } catch (InputMismatchException e) {
-            System.err.println("Lỗi: Vui lòng nhập đúng định dạng!");
-        } catch (Exception e) {
-            System.err.println("Có lỗi xảy ra: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
-    private static void printDatabase(List<Set<String>> database) {
-        for (int i = 0; i < database.size(); i++) {
-            System.out.println("Transaction " + (i + 1) + ": " + database.get(i));
+    private static List<Set<String>> loadDatabase(String filename) {
+        List<Set<String>> db = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    String[] items = line.trim().split("\\s+");
+                    db.add(new HashSet<>(Arrays.asList(items)));
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Lỗi đọc file: " + e.getMessage());
         }
-    }
-
-    private static void printPatterns(Collection<Set<String>> patterns) {
-        if (patterns.isEmpty()) {
-            System.out.println("Không tìm thấy patterns.");
-            return;
-        }
-
-        int count = 1;
-        for (Set<String> pattern : patterns) {
-            System.out.println("Pattern " + count + ": " + pattern);
-            count++;
-        }
-        System.out.println("Tổng số patterns: " + (count - 1));
+        return db;
     }
 }
