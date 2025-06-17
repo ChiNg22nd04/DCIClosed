@@ -1,3 +1,4 @@
+
 import java.util.*;
 class ClosedPatternMining {
     private final int minSup;
