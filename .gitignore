@@ -31,3 +31,7 @@ bin/
 ### 17th6 Restructure source code ###
 .history/
 target/
+*.txt
+*.xlsx
+*.doc
+
