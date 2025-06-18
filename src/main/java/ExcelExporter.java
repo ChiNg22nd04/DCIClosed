@@ -12,15 +12,16 @@ public class ExcelExporter {
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet("Summary");
 
-        writeHeader(sheet);
+        writeGroupedHeaderWithStyle(sheet, workbook);
         writeData(sheet, summaryMap);
-        autoSizeColumns(sheet, 10);
+        autoSizeColumns(sheet, 13);
 
         int rowCount = summaryMap.size();
 
         drawChart(sheet, rowCount, "Runtime Comparison", 1, 4, 13, 30);
         drawChart(sheet, rowCount, "Memory Usage Comparison", 4, 7, 13, 48);
         drawChart(sheet, rowCount, "Filtered Patterns Comparison", 7, 10, 13, 66);
+        drawChart(sheet, rowCount, "Candidates Generated Comparison", 10, 13, 13, 84);
 
         try (FileOutputStream out = new FileOutputStream(fileName)) {
             workbook.write(out);
@@ -29,21 +30,97 @@ public class ExcelExporter {
         workbook.close();
     }
 
-    private static void writeHeader(XSSFSheet sheet) {
-        Row header = sheet.createRow(0);
+    private static void writeGroupedHeaderWithStyle(XSSFSheet sheet, XSSFWorkbook workbook) {
+        // ===== DÒNG 0: Tiêu đề dataset =====
+        Row datasetRow = sheet.createRow(0);
+        Cell datasetCell = datasetRow.createCell(0);
+        datasetCell.setCellValue("CHESS");
+        CellStyle titleStyle = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setFontHeightInPoints((short) 14);
+        titleStyle.setFont(font);
+        titleStyle.setAlignment(HorizontalAlignment.CENTER);
+        datasetCell.setCellStyle(titleStyle);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
+    
+        // ===== DÒNG 1: Nhóm thuộc tính =====
+        Row groupRow = sheet.createRow(1);
+        Map<String, CellStyle> styles = createGroupStyles(workbook);
+    
+        groupRow.createCell(0).setCellValue(""); // minSup không merge
+    
+        groupRow.createCell(1).setCellValue("Runtime (ms)");
+        groupRow.getCell(1).setCellStyle(styles.get("runtime"));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 1, 3));
+    
+        groupRow.createCell(4).setCellValue("Peak memory");
+        groupRow.getCell(4).setCellStyle(styles.get("memory"));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 4, 6));
+    
+        groupRow.createCell(7).setCellValue("Patterns Found");
+        groupRow.getCell(7).setCellStyle(styles.get("pattern"));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 7, 9));
+    
+        groupRow.createCell(10).setCellValue("Candidates Generated");
+        groupRow.getCell(10).setCellStyle(styles.get("candidates"));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 10, 12));
+    
+        // ===== DÒNG 2: Tên độ đo (Jaccard, Dice, Kulc) =====
+        Row methodRow = sheet.createRow(2);
         String[] titles = {
             "minSup",
-            "Jaccard_Runtime", "Dice_Runtime", "Kulc_Runtime",
-            "Jaccard_Mem", "Dice_Mem", "Kulc_Mem",
-            "Jaccard_Patterns", "Dice_Patterns", "Kulc_Patterns"
+            "Jaccard", "Dice", "Kulc",
+            "Jaccard", "Dice", "Kulc",
+            "Jaccard", "Dice", "Kulc",
+            "Jaccard", "Dice", "Kulc"
         };
+    
         for (int i = 0; i < titles.length; i++) {
-            header.createCell(i).setCellValue(titles[i]);
+            Cell cell = methodRow.createCell(i);
+            cell.setCellValue(titles[i]);
+    
+            if (i >= 1 && i <= 3) cell.setCellStyle(styles.get("runtime"));
+            else if (i >= 4 && i <= 6) cell.setCellStyle(styles.get("memory"));
+            else if (i >= 7 && i <= 9) cell.setCellStyle(styles.get("pattern"));
+            else if (i >= 10 && i <= 12) cell.setCellStyle(styles.get("candidates"));
+            else cell.setCellStyle(styles.get("default"));
         }
+    }
+    
+    private static Map<String, CellStyle> createGroupStyles(XSSFWorkbook workbook) {
+        Map<String, CellStyle> map = new HashMap<>();
+
+        map.put("runtime", createStyle(workbook, IndexedColors.LIGHT_ORANGE));
+        map.put("memory", createStyle(workbook, IndexedColors.LIGHT_GREEN));
+        map.put("pattern", createStyle(workbook, IndexedColors.LIGHT_CORNFLOWER_BLUE));
+        map.put("candidates", createStyle(workbook, IndexedColors.YELLOW1));
+        map.put("default", createStyle(workbook, IndexedColors.GREY_25_PERCENT));
+
+        return map;
+    }
+
+    private static CellStyle createStyle(XSSFWorkbook workbook, IndexedColors color) {
+        CellStyle style = workbook.createCellStyle();
+        style.setFillForegroundColor(color.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.CENTER);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+
+        return style;
     }
 
     private static void writeData(XSSFSheet sheet, Map<Double, Map<String, ResultRow>> summaryMap) {
-        int rowIdx = 1;
+        int rowIdx = 3; // dữ liệu bắt đầu từ hàng 2
         String[] order = {"Jaccard", "Dice", "Kulczynski"};
 
         for (Map.Entry<Double, Map<String, ResultRow>> entry : summaryMap.entrySet()) {
@@ -63,12 +140,15 @@ public class ExcelExporter {
             for (String sim : order) {
                 row.createCell(col++).setCellValue(data.get(sim).filteredPatterns);
             }
+            for (String sim : order) {
+                row.createCell(col++).setCellValue(data.get(sim).candidatesGenerated);
+            }
         }
     }
 
     private static void autoSizeColumns(XSSFSheet sheet, int columnCount) {
         for (int i = 0; i < columnCount; i++) {
-            sheet.autoSizeColumn(i);
+            sheet.setColumnWidth(i, 4000); // hoặc 5000 tùy bạn muốn rộng bao nhiêu
         }
     }
 
@@ -95,7 +175,7 @@ public class ExcelExporter {
         leftAxis.setTitle("Value");
 
         XDDFDataSource<Double> minSup = XDDFDataSourcesFactory.fromNumericCellRange(sheet,
-                new CellRangeAddress(1, rowCount, 0, 0));
+                new CellRangeAddress(2, rowCount + 1, 0, 0)); // start from row 2
 
         XDDFLineChartData data = (XDDFLineChartData) chart.createData(ChartTypes.LINE, bottomAxis, leftAxis);
 
@@ -108,7 +188,7 @@ public class ExcelExporter {
 
         for (int i = colStart; i < colEnd; i++) {
             XDDFNumericalDataSource<Double> y = XDDFDataSourcesFactory.fromNumericCellRange(sheet,
-                    new CellRangeAddress(1, rowCount, i, i));
+                    new CellRangeAddress(2, rowCount + 1, i, i));
             XDDFLineChartData.Series series = (XDDFLineChartData.Series) data.addSeries(minSup, y);
             series.setTitle(names[i - colStart], null);
             series.setSmooth(false);

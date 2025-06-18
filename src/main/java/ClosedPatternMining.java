@@ -1,12 +1,18 @@
-
 import java.util.*;
+
 class ClosedPatternMining {
     private final int minSup;
     private final Map<String, Set<Integer>> verticalDB = new HashMap<>();
     private final Set<Set<String>> closedPatterns = new HashSet<>();
+    private int candidatesGenerated = 0; // ✅ Biến đếm ứng viên
 
     public ClosedPatternMining(int minSup) {
         this.minSup = minSup;
+    }
+
+    // ✅ Hàm truy xuất số lượng candidates đã tạo
+    public int getCandidatesGenerated() {
+        return candidatesGenerated;
     }
 
     public Set<Set<String>> run(List<Set<String>> transactions) {
@@ -22,8 +28,9 @@ class ClosedPatternMining {
         // Sort postset in ascending order of support
         postset.sort(Comparator.comparingInt(i -> verticalDB.get(i).size()));
 
-        // Begin recursion
+        // Bắt đầu đệ quy
         DCI_Closed_Recursive(new HashSet<>(), null, postset, new HashSet<>(), true);
+
         return closedPatterns;
     }
 
@@ -39,7 +46,9 @@ class ClosedPatternMining {
                                       List<String> postset, Set<String> preset, boolean firstCall) {
         for (int i = 0; i < postset.size(); i++) {
             String item = postset.get(i);
-            Set<Integer> T_new = firstCall ? new HashSet<>(verticalDB.get(item)) : intersect(TP, verticalDB.get(item));
+            Set<Integer> T_new = firstCall
+                    ? new HashSet<>(verticalDB.get(item))
+                    : intersect(TP, verticalDB.get(item));
 
             if (T_new.size() >= minSup) {
                 Set<String> X = new HashSet<>(P);
@@ -67,7 +76,11 @@ class ClosedPatternMining {
                         }
                     }
 
+                    // ✅ Tăng đếm ứng viên khi tạo mẫu mới
+                    candidatesGenerated++;
+
                     closedPatterns.add(X_ext);
+
                     DCI_Closed_Recursive(X_ext, T_X, postsetNew, new HashSet<>(preset), false);
                 }
             }

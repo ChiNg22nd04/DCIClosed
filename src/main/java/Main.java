@@ -43,6 +43,7 @@ public class Main {
 
                 ClosedPatternMining miner = new ClosedPatternMining(absSup);
                 Set<Set<String>> closed = miner.run(database);
+                int candidates = miner.getCandidatesGenerated();
                 List<Set<String>> filtered = SimilarityChecker.checkSimilarity(closed, minSim, sim);
 
                 long end = System.currentTimeMillis();
@@ -51,7 +52,7 @@ public class Main {
                 double usedMemMb = (afterMem - beforeMem) / (1024.0 * 1024.0);
                 long runtimeMs = end - start;
 
-                ResultRow row = new ResultRow(minSupRatio, runtimeMs, usedMemMb, closed.size(), filtered.size());
+                ResultRow row = new ResultRow(minSupRatio, runtimeMs, usedMemMb, closed.size(), filtered.size(), candidates);
 
                 summaryMap.putIfAbsent(minSupRatio, new LinkedHashMap<>());
                 summaryMap.get(minSupRatio).put(name, row);
