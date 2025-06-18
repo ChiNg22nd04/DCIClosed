@@ -77,8 +77,8 @@ public class Main {
         try {
             ExcelExporter.exportMultipleSheetsSummary(allDatasetResults, "All_Datasets_Summary.xlsx");
             System.out.println("\n✅ Đã xuất toàn bộ kết quả vào file All_Datasets_Summary.xlsx");
-        } catch (Exception e) {
-            System.err.println("❌ Lỗi khi xuất Excel: " + e.getMessage());
+        }  catch (Exception e) {
+            e.printStackTrace(); 
         }
     }
 

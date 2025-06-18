@@ -181,10 +181,10 @@ public class ExcelExporter {
         legend.setPosition(LegendPosition.BOTTOM); // Nằm ngang dưới biểu đồ
     
         XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
-        bottomAxis.setTitle("minSup");
+        bottomAxis.setTitle("MINSUP");
     
         XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-        leftAxis.setTitle("Value");
+        leftAxis.setTitle("VALUE");
     
         XDDFLineChartData data = (XDDFLineChartData) chart.createData(ChartTypes.LINE, bottomAxis, leftAxis);
     
@@ -217,10 +217,10 @@ public class ExcelExporter {
         legend.setPosition(LegendPosition.BOTTOM); // Nằm ngang dưới biểu đồ
     
         XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
-        bottomAxis.setTitle("minSup");
+        bottomAxis.setTitle("MINSUP");
     
         XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-        leftAxis.setTitle("Candidates");
+        leftAxis.setTitle("CANDIDATES");
     
         XDDFBarChartData data = (XDDFBarChartData) chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
         data.setBarDirection(BarDirection.COL);
@@ -236,6 +236,8 @@ public class ExcelExporter {
             series.setTitle(names[i - colStart], null);
         }
     
+        data.setVaryColors(true);
+
         chart.plot(data);
     }
     
@@ -248,21 +250,21 @@ public class ExcelExporter {
             writeGroupedHeaderWithStyle(sheet, workbook, datasetName);
             writeData(sheet, entry.getValue());
             autoSizeColumns(sheet, 13);
+
             int rowCount = entry.getValue().size();
-            // drawChart(sheet, rowCount, "Runtime", 1, 4, 13, 30);
-            // drawChart(sheet, rowCount, "Memory", 4, 7, 13, 48);
-            // drawBarChart(sheet, rowCount, "Candidates", 10, 13, 13, 66);
             
             int chartStartRow = rowCount + 5;
-            drawChart(sheet, rowCount, "Runtime", 1, 4, 1, chartStartRow);
-            drawChart(sheet, rowCount, "Memory Usage", 6, 9, 6, chartStartRow);
-            drawBarChart(sheet, rowCount, "Candidates Generated", 11, 15, 11, chartStartRow);
+            drawChart(sheet, rowCount, "Runtime", 1, 4, 1, chartStartRow); // col 1,2,3
+            drawChart(sheet, rowCount, "Memory Usage", 4, 7, 6, chartStartRow); // col 4,5,6
+            drawBarChart(sheet, rowCount, "Candidates Generated", 10, 13, 11, chartStartRow); // col 10,11,12
+
         }
         try (FileOutputStream out = new FileOutputStream(fileName)) {
             workbook.write(out);
         }
         workbook.close();
     }
+    
     private static void applyBorderToMergedRegion(XSSFSheet sheet, CellRangeAddress region, CellStyle style) {
         for (int row = region.getFirstRow(); row <= region.getLastRow(); row++) {
             Row sheetRow = sheet.getRow(row);
@@ -274,5 +276,7 @@ public class ExcelExporter {
             }
         }
     }
+    
+    
     
 }
