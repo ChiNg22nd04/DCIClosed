@@ -208,7 +208,7 @@ private static void drawBarChart(XSSFSheet sheet, int rowCount, String chartTitl
                                   int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
     XSSFDrawing drawing = sheet.createDrawingPatriarch();
     XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0,
-            anchorColStart, anchorRowStart, anchorColStart + 4, anchorRowStart + 13);
+            anchorColStart, anchorRowStart, anchorColStart + 5, anchorRowStart + 13);
 
     XSSFChart chart = drawing.createChart(anchor);
     chart.setTitleText(chartTitle);
