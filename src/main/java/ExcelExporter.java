@@ -204,43 +204,70 @@ public class ExcelExporter {
         chart.plot(data);
     }
     
-    private static void drawBarChart(XSSFSheet sheet, int rowCount, String chartTitle, int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
-        XSSFDrawing drawing = sheet.createDrawingPatriarch();
-        XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0,
-                anchorColStart, anchorRowStart, anchorColStart + 4, anchorRowStart + 13);
-    
-        XSSFChart chart = drawing.createChart(anchor);
-        chart.setTitleText(chartTitle);
-        chart.setTitleOverlay(false);
-    
-        XDDFChartLegend legend = chart.getOrAddLegend();
-        legend.setPosition(LegendPosition.BOTTOM); // Nằm ngang dưới biểu đồ
-    
-        XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
-        bottomAxis.setTitle("MINSUP");
-    
-        XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-        leftAxis.setTitle("CANDIDATES");
-    
-        XDDFBarChartData data = (XDDFBarChartData) chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
-        data.setBarDirection(BarDirection.COL);
-    
-        XDDFDataSource<Double> minSup = XDDFDataSourcesFactory.fromNumericCellRange(sheet,
-                new CellRangeAddress(3, rowCount + 2, 0, 0));
-        String[] names = {"Jaccard", "Dice", "Kulczynski"};
-    
-        for (int i = colStart; i < colEnd; i++) {
-            XDDFNumericalDataSource<Double> y = XDDFDataSourcesFactory.fromNumericCellRange(sheet,
-                    new CellRangeAddress(3, rowCount + 2, i, i));
-            XDDFBarChartData.Series series = (XDDFBarChartData.Series) data.addSeries(minSup, y);
-            series.setTitle(names[i - colStart], null);
-        }
-    
-        data.setVaryColors(true);
+private static void drawBarChart(XSSFSheet sheet, int rowCount, String chartTitle,
+                                  int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
+    XSSFDrawing drawing = sheet.createDrawingPatriarch();
+    XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0,
+            anchorColStart, anchorRowStart, anchorColStart + 4, anchorRowStart + 13);
 
-        chart.plot(data);
+    XSSFChart chart = drawing.createChart(anchor);
+    chart.setTitleText(chartTitle);
+    chart.setTitleOverlay(false);
+
+    XDDFChartLegend legend = chart.getOrAddLegend();
+    legend.setPosition(LegendPosition.BOTTOM);
+
+    XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
+    bottomAxis.setTitle("MINSUP");
+
+    XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
+    leftAxis.setTitle("CANDIDATES");
+
+    XDDFBarChartData data = (XDDFBarChartData) chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
+    data.setBarDirection(BarDirection.COL);
+
+    int firstRow = 3;                // bắt đầu dữ liệu thực
+    int lastRow = firstRow + rowCount - 1;
+
+    // ⬇ Chuẩn bị danh sách minSup để hiển thị trên trục X (dư 2 dòng)
+    List<String> categoryLabels = new ArrayList<>();
+    categoryLabels.add(""); // dòng đầu ẩn
+
+    for (int r = firstRow; r <= lastRow; r++) {
+        Cell cell = sheet.getRow(r).getCell(0);
+        categoryLabels.add(cell.toString()); // ví dụ "0.005"
     }
-    
+
+    categoryLabels.add(""); // dòng cuối ẩn
+
+    XDDFDataSource<String> minSup = XDDFDataSourcesFactory.fromArray(
+            categoryLabels.toArray(new String[0])
+    );
+
+    String[] names = {"Jaccard", "Dice", "Kulczynski"};
+
+    for (int i = colStart; i < colEnd; i++) {
+        List<Double> yValues = new ArrayList<>();
+        yValues.add(0.0); // dòng đầu ẩn
+
+        for (int r = firstRow; r <= lastRow; r++) {
+            Cell cell = sheet.getRow(r).getCell(i);
+            yValues.add(cell.getNumericCellValue());
+        }
+
+        yValues.add(0.0); // dòng cuối ẩn
+
+        XDDFNumericalDataSource<Double> ySeries = XDDFDataSourcesFactory.fromArray(
+                yValues.toArray(new Double[0]), null
+        );
+
+        XDDFBarChartData.Series series = (XDDFBarChartData.Series) data.addSeries(minSup, ySeries);
+        series.setTitle(names[i - colStart], null);
+    }
+
+    data.setVaryColors(true);
+    chart.plot(data);
+}
 
     public static void exportMultipleSheetsSummary(Map<String, Map<Double, Map<String, ResultRow>>> allResults, String fileName) throws Exception {
         XSSFWorkbook workbook = new XSSFWorkbook();
