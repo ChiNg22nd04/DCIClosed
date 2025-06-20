@@ -80,12 +80,14 @@ public class ExcelExporter {
     
     private static Map<String, CellStyle> createGroupStyles(XSSFWorkbook workbook) {
         Map<String, CellStyle> map = new HashMap<>();
-        map.put("runtime", createStyle(workbook, IndexedColors.LIGHT_ORANGE));
-        map.put("memory", createStyle(workbook, IndexedColors.LIGHT_GREEN));
-        map.put("pattern", createStyle(workbook, IndexedColors.LIGHT_CORNFLOWER_BLUE));
-        map.put("candidates", createStyle(workbook, IndexedColors.YELLOW1));
+        map.put("runtime", createStyle(workbook, IndexedColors.ORANGE));
+        map.put("memory", createStyle(workbook, IndexedColors.CORAL));
+        map.put("pattern", createStyle(workbook, IndexedColors.LAVENDER));
+        map.put("candidates", createStyle(workbook, IndexedColors.ROSE));
         map.put("default", createStyle(workbook, IndexedColors.GREY_25_PERCENT));
         map.put("datasetTitle", createTitleStyle(workbook));
+        map.put("jaccard", createStyle(workbook, IndexedColors.LIGHT_TURQUOISE));
+
         return map;
     }
 
@@ -122,48 +124,70 @@ public class ExcelExporter {
     private static void writeData(XSSFSheet sheet, Map<Double, Map<String, ResultRow>> summaryMap) {
         int rowIdx = 3;
         String[] order = {"Jaccard", "Dice", "Kulczynski"};
-    
-        // Tạo style có border
-        CellStyle borderedStyle = sheet.getWorkbook().createCellStyle();
-        borderedStyle.setBorderTop(BorderStyle.THIN);
-        borderedStyle.setBorderBottom(BorderStyle.THIN);
-        borderedStyle.setBorderLeft(BorderStyle.THIN);
-        borderedStyle.setBorderRight(BorderStyle.THIN);
-    
+
+        Workbook workbook = sheet.getWorkbook();
+
+        // Style mặc định có border
+        CellStyle defaultStyle = workbook.createCellStyle();
+        defaultStyle.setBorderTop(BorderStyle.THIN);
+        defaultStyle.setBorderBottom(BorderStyle.THIN);
+        defaultStyle.setBorderLeft(BorderStyle.THIN);
+        defaultStyle.setBorderRight(BorderStyle.THIN);
+
+        // Style riêng cho từng thuật toán
+        Map<String, CellStyle> algoStyles = new HashMap<>();
+        algoStyles.put("Jaccard", createAlgoStyle(workbook, IndexedColors.LIGHT_TURQUOISE, defaultStyle));
+        algoStyles.put("Dice", createAlgoStyle(workbook, IndexedColors.LIGHT_YELLOW, defaultStyle));
+        algoStyles.put("Kulczynski", createAlgoStyle(workbook, IndexedColors.LIGHT_GREEN, defaultStyle));
+
         for (Map.Entry<Double, Map<String, ResultRow>> entry : summaryMap.entrySet()) {
             Row row = sheet.createRow(rowIdx++);
             int col = 0;
-    
+
+            // Ghi minSup
             Cell minSupCell = row.createCell(col++);
             minSupCell.setCellValue(entry.getKey());
-            minSupCell.setCellStyle(borderedStyle);
-    
+            minSupCell.setCellStyle(defaultStyle);
+
+            // Runtime
             for (String sim : order) {
                 Cell cell = row.createCell(col++);
                 cell.setCellValue(entry.getValue().get(sim).runtimeMs);
-                cell.setCellStyle(borderedStyle);
+                cell.setCellStyle(algoStyles.get(sim));
             }
-    
+
+            // Memory
             for (String sim : order) {
                 Cell cell = row.createCell(col++);
                 cell.setCellValue(entry.getValue().get(sim).memoryUsageMb);
-                cell.setCellStyle(borderedStyle);
+                cell.setCellStyle(algoStyles.get(sim));
             }
-    
+
+            // Patterns
             for (String sim : order) {
                 Cell cell = row.createCell(col++);
                 cell.setCellValue(entry.getValue().get(sim).filteredPatterns);
-                cell.setCellStyle(borderedStyle);
+                cell.setCellStyle(algoStyles.get(sim));
             }
-    
+
+            // Candidates
             for (String sim : order) {
                 Cell cell = row.createCell(col++);
                 cell.setCellValue(entry.getValue().get(sim).candidatesGenerated);
-                cell.setCellStyle(borderedStyle);
+                cell.setCellStyle(algoStyles.get(sim));
             }
         }
     }
-    
+
+    private static CellStyle createAlgoStyle(Workbook workbook, IndexedColors color, CellStyle baseStyle) {
+        CellStyle style = workbook.createCellStyle();
+        style.cloneStyleFrom(baseStyle);
+        style.setFillForegroundColor(color.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return style;
+    }
+
+
     private static void autoSizeColumns(XSSFSheet sheet, int columnCount) {
         for (int i = 0; i < columnCount; i++) sheet.setColumnWidth(i, 4000);
     }
@@ -204,70 +228,70 @@ public class ExcelExporter {
         chart.plot(data);
     }
     
-private static void drawBarChart(XSSFSheet sheet, int rowCount, String chartTitle,
-                                  int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
-    XSSFDrawing drawing = sheet.createDrawingPatriarch();
-    XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0,
-            anchorColStart, anchorRowStart, anchorColStart + 5, anchorRowStart + 13);
+    private static void drawBarChart(XSSFSheet sheet, int rowCount, String chartTitle,
+                                    int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
+        XSSFDrawing drawing = sheet.createDrawingPatriarch();
+        XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0,
+                anchorColStart, anchorRowStart, anchorColStart + 5, anchorRowStart + 13);
 
-    XSSFChart chart = drawing.createChart(anchor);
-    chart.setTitleText(chartTitle);
-    chart.setTitleOverlay(false);
+        XSSFChart chart = drawing.createChart(anchor);
+        chart.setTitleText(chartTitle);
+        chart.setTitleOverlay(false);
 
-    XDDFChartLegend legend = chart.getOrAddLegend();
-    legend.setPosition(LegendPosition.BOTTOM);
+        XDDFChartLegend legend = chart.getOrAddLegend();
+        legend.setPosition(LegendPosition.BOTTOM);
 
-    XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
-    bottomAxis.setTitle("MINSUP");
+        XDDFCategoryAxis bottomAxis = chart.createCategoryAxis(AxisPosition.BOTTOM);
+        bottomAxis.setTitle("MINSUP");
 
-    XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-    leftAxis.setTitle("CANDIDATES");
+        XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
+        leftAxis.setTitle("CANDIDATES");
 
-    XDDFBarChartData data = (XDDFBarChartData) chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
-    data.setBarDirection(BarDirection.COL);
+        XDDFBarChartData data = (XDDFBarChartData) chart.createData(ChartTypes.BAR, bottomAxis, leftAxis);
+        data.setBarDirection(BarDirection.COL);
 
-    int firstRow = 3;                // bắt đầu dữ liệu thực
-    int lastRow = firstRow + rowCount - 1;
+        int firstRow = 3;                // bắt đầu dữ liệu thực
+        int lastRow = firstRow + rowCount - 1;
 
-    // ⬇ Chuẩn bị danh sách minSup để hiển thị trên trục X (dư 2 dòng)
-    List<String> categoryLabels = new ArrayList<>();
-    categoryLabels.add(""); // dòng đầu ẩn
-
-    for (int r = firstRow; r <= lastRow; r++) {
-        Cell cell = sheet.getRow(r).getCell(0);
-        categoryLabels.add(cell.toString()); // ví dụ "0.005"
-    }
-
-    categoryLabels.add(""); // dòng cuối ẩn
-
-    XDDFDataSource<String> minSup = XDDFDataSourcesFactory.fromArray(
-            categoryLabels.toArray(new String[0])
-    );
-
-    String[] names = {"Jaccard", "Dice", "Kulczynski"};
-
-    for (int i = colStart; i < colEnd; i++) {
-        List<Double> yValues = new ArrayList<>();
-        yValues.add(0.0); // dòng đầu ẩn
+        // ⬇ Chuẩn bị danh sách minSup để hiển thị trên trục X (dư 2 dòng)
+        List<String> categoryLabels = new ArrayList<>();
+        categoryLabels.add(""); // dòng đầu ẩn
 
         for (int r = firstRow; r <= lastRow; r++) {
-            Cell cell = sheet.getRow(r).getCell(i);
-            yValues.add(cell.getNumericCellValue());
+            Cell cell = sheet.getRow(r).getCell(0);
+            categoryLabels.add(cell.toString()); // ví dụ "0.005"
         }
 
-        yValues.add(0.0); // dòng cuối ẩn
+        categoryLabels.add(""); // dòng cuối ẩn
 
-        XDDFNumericalDataSource<Double> ySeries = XDDFDataSourcesFactory.fromArray(
-                yValues.toArray(new Double[0]), null
+        XDDFDataSource<String> minSup = XDDFDataSourcesFactory.fromArray(
+                categoryLabels.toArray(new String[0])
         );
 
-        XDDFBarChartData.Series series = (XDDFBarChartData.Series) data.addSeries(minSup, ySeries);
-        series.setTitle(names[i - colStart], null);
-    }
+        String[] names = {"Jaccard", "Dice", "Kulczynski"};
 
-    data.setVaryColors(true);
-    chart.plot(data);
-}
+        for (int i = colStart; i < colEnd; i++) {
+            List<Double> yValues = new ArrayList<>();
+            yValues.add(0.0); // dòng đầu ẩn
+
+            for (int r = firstRow; r <= lastRow; r++) {
+                Cell cell = sheet.getRow(r).getCell(i);
+                yValues.add(cell.getNumericCellValue());
+            }
+
+            yValues.add(0.0); // dòng cuối ẩn
+
+            XDDFNumericalDataSource<Double> ySeries = XDDFDataSourcesFactory.fromArray(
+                    yValues.toArray(new Double[0]), null
+            );
+
+            XDDFBarChartData.Series series = (XDDFBarChartData.Series) data.addSeries(minSup, ySeries);
+            series.setTitle(names[i - colStart], null);
+        }
+
+        data.setVaryColors(true);
+        chart.plot(data);
+    }
 
     public static void exportMultipleSheetsSummary(Map<String, Map<Double, Map<String, ResultRow>>> allResults, String fileName) throws Exception {
         XSSFWorkbook workbook = new XSSFWorkbook();
