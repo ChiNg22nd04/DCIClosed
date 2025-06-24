@@ -1,12 +1,15 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
+import java.io.IOException;
+import java.io.BufferedReader; // Đọc file dòng–theo–dòng
+
+import java.io.FileReader;
+// import java.io.IOException;
+// import java.util.*; // List, Set, ArrayList, HashSet,...
 public class Main {
     public static void main(String[] args) {
         List<Set<String>> database = loadDatabase("kosarak.dat.txt");
 
-        // Chỉ tạo BitMatrix 1 lần cho Jaccard
+        // Khởi tạo các độ đo tương đồng
         JaccardSimilarity jaccard = new JaccardSimilarity(database);
         DiceSimilarity dice = new DiceSimilarity();
         KulczynskiSimilarity kulc = new KulczynskiSimilarity();
@@ -35,6 +38,7 @@ public class Main {
                 System.out.printf("%-8.3f %-12d %-18d %-12d\n", minSupRatio, end - start, closed.size(), filtered.size());
             }
         }
+    
     }
 
     private static List<Set<String>> loadDatabase(String filename) {
