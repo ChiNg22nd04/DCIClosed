@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.*;
 public class Main {
     public static void main(String[] args) {
-        List<Set<String>> database = loadDatabase("mushrooms.txt");
+        List<Set<String>> database = loadDatabase("kosarak.dat.txt");
 
         // Chỉ tạo BitMatrix 1 lần cho Jaccard
         JaccardSimilarity jaccard = new JaccardSimilarity(database);
@@ -15,7 +15,7 @@ public class Main {
         List<String> names = Arrays.asList("Jaccard", "Dice", "Kulczynski");
 
         double[] minSups = {0.005, 0.006, 0.007, 0.008, 0.009, 0.01};
-        double minSim = 0.3;
+        double minSim = 0.5;
 
         for (int i = 0; i < measures.size(); i++) {
             SimilarityMeasure sim = measures.get(i);
