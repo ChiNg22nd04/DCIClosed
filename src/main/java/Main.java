@@ -99,6 +99,7 @@ public class Main {
                         
                         // Đo memory sau khi hoàn thành
                         System.gc();
+                        Thread.sleep(100); // Cho phép GC hoàn tất
                         long afterMem = runtime.totalMemory() - runtime.freeMemory();
 
                         // ✅ Tính toán metrics riêng biệt cho từng thuật toán

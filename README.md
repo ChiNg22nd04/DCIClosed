@@ -10,17 +10,17 @@
 
 Công cụ này được xây dựng để:
 
-- Phân tích và khai thác mẫu tương đồng từ tập dữ liệu giao dịch.
-- Tính toán các chỉ số tương đồng phổ biến:
-  - Jaccard
-  - Dice
-  - Kulczynski
-- Đo lường:
-  - Thời gian thực thi (runtime)
-  - Bộ nhớ tiêu thụ (peak memory)
-  - Số lượng mẫu được sinh ra (patterns found)
-  - Số lượng candidate patterns
-- Xuất kết quả ra file Excel đẹp mắt với biểu đồ trực quan.
+-   Phân tích và khai thác mẫu tương đồng từ tập dữ liệu giao dịch.
+-   Tính toán các chỉ số tương đồng phổ biến:
+    -   Jaccard
+    -   Dice
+    -   Kulczynski
+-   Đo lường:
+    -   Thời gian thực thi (runtime)
+    -   Bộ nhớ tiêu thụ (used Memory)
+    -   Số lượng mẫu được sinh ra (patterns found)
+    -   Số lượng candidate patterns
+-   Xuất kết quả ra file Excel đẹp mắt với biểu đồ trực quan.
 
 ---
 
