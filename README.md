@@ -24,4 +24,5 @@ Công cụ này được xây dựng để:
 
 ---
 
-<img width="1440" alt="image" src="https://github.com/user-attachments/assets/81681e75-5f39-4044-8d45-ded0e7cfd1d7" />
+<img width="1440" alt="Ảnh màn hình 2025-07-09 lúc 17 55 23" src="https://github.com/user-attachments/assets/e913cdcf-eb57-4257-9dc8-f90df8d9a389" />
+
