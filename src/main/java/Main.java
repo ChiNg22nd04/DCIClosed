@@ -6,7 +6,7 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) {
         // Danh sách các file database bạn có
-        String[] datasets = {"mushrooms.txt", "retail.txt"};
+        String[] datasets = {"mushrooms.txt", "retail.txt","kosarak.dat.txt"};
 
         // Map chứa toàn bộ kết quả: <DatasetName, SummaryMap>
         Map<String, Map<Double, Map<String, ResultRow>>> allDatasetResults = new LinkedHashMap<>();
