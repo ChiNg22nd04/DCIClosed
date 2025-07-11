@@ -47,7 +47,7 @@ public class ExcelExporter {
         applyBorderToMergedRegion(sheet, runtimeRegion, styles.get("runtime"));
     
         // Memory
-        groupRow.createCell(4).setCellValue("Peak memory");
+        groupRow.createCell(4).setCellValue("Used Memory");
         CellRangeAddress memoryRegion = new CellRangeAddress(1, 1, 4, 6);
         sheet.addMergedRegion(memoryRegion);
         applyBorderToMergedRegion(sheet, memoryRegion, styles.get("memory"));

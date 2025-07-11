@@ -22,26 +22,15 @@ public class JaccardSimilarity implements SimilarityMeasure {
 
     @Override
     public double compute(Set<String> A, Set<String> B) {
-        if (A.isEmpty() || B.isEmpty()) return 0.0;
-
-        BitSet bitset1 = new BitSet();
-        BitSet bitset2 = new BitSet();
-
-        for (String item : A) {
-            bitset1.or(getMatrix().getBitSetOf(item));
-        }
-
-        for (String item : B) {
-            bitset2.or(getMatrix().getBitSetOf(item));
-        }
-
-        BitSet intersection = (BitSet) bitset1.clone();
-        intersection.and(bitset2);
-
-        BitSet union = (BitSet) bitset1.clone();
-        union.or(bitset2);
-
-        return union.cardinality() == 0 ? 0.0 : (double) intersection.cardinality() / union.cardinality();
+        if (A.isEmpty() && B.isEmpty()) return 1.0;
+        
+        Set<String> intersection = new HashSet<>(A);
+        intersection.retainAll(B);
+        
+        Set<String> union = new HashSet<>(A);
+        union.addAll(B);
+        
+        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
     }
 }
 
