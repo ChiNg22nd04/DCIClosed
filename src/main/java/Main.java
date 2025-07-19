@@ -124,8 +124,8 @@ public class Main {
                         summaryMap.get(minSupRatio).put(name, row);
 
                         System.out.printf("     ✅ Closed: %d, Filtered: %d\n", closed.size(), filtered.size());
-                        System.out.printf("     ⏱️ Mining: %dms, Filter: %dms, Total: %dms\n",
-                                miningTime, filterTime, totalRuntimeMs);
+                        System.out.printf("     ⏱️ Mining: %.3fs, Filter: %.3fs, Total: %.3fs\n",
+                                miningTime/1000.0, filterTime/1000.0, totalRuntimeMs/1000.0);
                         System.out.printf("     💾 Memory: %.2fMB\n", usedMemMb);
                         System.out.printf("     🔢 Mining candidates: %d, Similarity comparisons: %d, Total: %d\n",
                                 miningCandidates, similarityComparisons, totalCandidates);
@@ -258,7 +258,7 @@ public class Main {
             for (Map.Entry<String, AlgorithmStats> entry : algoStats.entrySet()) {
                 AlgorithmStats stats = entry.getValue();
                 System.out.println("   " + entry.getKey() + ":");
-                System.out.println("     - Avg runtime: " + df.format(stats.avgRuntime()) + "ms");
+                System.out.println("     - Avg runtime: " + String.format("%.3f", stats.avgRuntime() / 1000.0) + "s");
                 System.out.println("     - Avg memory: " + String.format("%.2f", stats.avgMemory()) + "MB");
                 System.out.println("     - Total patterns: " + df.format(stats.totalPatterns));
                 System.out.println("     - Total candidates: " + df.format(stats.totalCandidates));
