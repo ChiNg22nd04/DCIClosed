@@ -4,28 +4,15 @@ import java.util.*;
 public class KulczynskiSimilarity implements SimilarityMeasure {
     @Override
     public double compute(Set<String> A, Set<String> B) {
-        int supportA = A.size();
-        int supportB = B.size();
-
-        // Nếu 1 trong 2 tập rỗng thì độ đo = 0
-        if (supportA == 0 || supportB == 0) {
-            return 0.0;
-        }
-
-        // Tính giao nhau
+        if (A.isEmpty() && B.isEmpty()) return 1.0;
+        if (A.isEmpty() || B.isEmpty()) return 0.0;
+        
         Set<String> intersection = new HashSet<>(A);
         intersection.retainAll(B);
-        int intersectionSize = intersection.size();
-
-        // Nếu không có phần tử chung → độ đo = 0
-        if (intersectionSize == 0) {
-            return 0.0;
-        }
-
-        // Tính 2 phần tử: intersection / A và intersection / B
-        double term1 = (double) intersectionSize / supportA;
-        double term2 = (double) intersectionSize / supportB;
-
-        return 0.5 * (term1 + term2); // Trung bình cộng của 2 giá trị
+        
+        double term1 = (double) intersection.size() / A.size();
+        double term2 = (double) intersection.size() / B.size();
+        
+        return 0.5 * (term1 + term2);
     }
 }

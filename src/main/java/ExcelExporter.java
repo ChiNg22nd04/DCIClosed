@@ -41,13 +41,13 @@ public class ExcelExporter {
         Row groupRow = sheet.createRow(1);
     
         // Runtime
-        groupRow.createCell(1).setCellValue("Runtime (ms)");
+        groupRow.createCell(1).setCellValue("Runtime (s)");
         CellRangeAddress runtimeRegion = new CellRangeAddress(1, 1, 1, 3);
         sheet.addMergedRegion(runtimeRegion);
         applyBorderToMergedRegion(sheet, runtimeRegion, styles.get("runtime"));
     
         // Memory
-        groupRow.createCell(4).setCellValue("Peak memory");
+        groupRow.createCell(4).setCellValue("Used Memory");
         CellRangeAddress memoryRegion = new CellRangeAddress(1, 1, 4, 6);
         sheet.addMergedRegion(memoryRegion);
         applyBorderToMergedRegion(sheet, memoryRegion, styles.get("memory"));
@@ -149,10 +149,10 @@ public class ExcelExporter {
             minSupCell.setCellValue(entry.getKey());
             minSupCell.setCellStyle(defaultStyle);
 
-            // Runtime
+            // Runtime (chuyển từ ms sang s)
             for (String sim : order) {
                 Cell cell = row.createCell(col++);
-                cell.setCellValue(entry.getValue().get(sim).runtimeMs);
+                cell.setCellValue(entry.getValue().get(sim).getRuntimeSeconds());
                 cell.setCellStyle(algoStyles.get(sim));
             }
 
@@ -189,7 +189,7 @@ public class ExcelExporter {
 
 
     private static void autoSizeColumns(XSSFSheet sheet, int columnCount) {
-        for (int i = 0; i < columnCount; i++) sheet.setColumnWidth(i, 4000);
+        for (int i = 0; i < columnCount; i++) sheet.setColumnWidth(i, 14 * 256); // 14 characters
     }
 
     private static void drawChart(XSSFSheet sheet, int rowCount, String chartTitle, int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
@@ -208,7 +208,7 @@ public class ExcelExporter {
         bottomAxis.setTitle("MINSUP");
     
         XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-        leftAxis.setTitle("VALUE");
+        leftAxis.setTitle("RUNTIME (s)");
     
         XDDFLineChartData data = (XDDFLineChartData) chart.createData(ChartTypes.LINE, bottomAxis, leftAxis);
     

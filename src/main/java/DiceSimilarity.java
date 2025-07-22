@@ -3,18 +3,12 @@ import java.util.*;
 public class DiceSimilarity implements SimilarityMeasure {
     @Override
     public double compute(Set<String> A, Set<String> B) {
-        int supportA = A.size();
-        int supportB = B.size();
-        int sumOfSupports = supportA + supportB;
-
-        if (sumOfSupports == 0) {
-            return 0.0;
-        }
-
+        if (A.isEmpty() && B.isEmpty()) return 1.0;
+        
         Set<String> intersection = new HashSet<>(A);
         intersection.retainAll(B);
-        int intersectionSize = intersection.size();
-
-        return (2.0 * intersectionSize) / sumOfSupports;
+        
+        int totalSize = A.size() + B.size();
+        return totalSize == 0 ? 0.0 : (2.0 * intersection.size()) / totalSize;
     }
 }
