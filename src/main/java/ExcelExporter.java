@@ -2,6 +2,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.xddf.usermodel.chart.*;
+import org.apache.poi.xddf.usermodel.*;
 
 import java.io.FileOutputStream;
 import java.util.*;
@@ -17,8 +18,8 @@ public class ExcelExporter {
         autoSizeColumns(sheet, 13);
 
         int rowCount = summaryMap.size();
-        drawChart(sheet, rowCount, "Runtime", 1, 4, 13, 30);
-        drawChart(sheet, rowCount, "Memory Usage", 4, 7, 13, 48);
+        drawChart(sheet, rowCount, "Runtime", 1, 4, 13, 30, "RUNTIME (s)");
+        drawChart(sheet, rowCount, "Memory Usage", 4, 7, 13, 48, "MEMORY (MB)");
         drawBarChart(sheet, rowCount, "Candidates Generated", 10, 13, 13, 66);
 
         try (FileOutputStream out = new FileOutputStream(fileName)) {
@@ -32,6 +33,7 @@ public class ExcelExporter {
     
         // Tiêu đề dataset (dòng 0)
         Row datasetRow = sheet.createRow(0);
+        datasetRow.setHeightInPoints(35); // Tăng chiều cao cho font size lớn hơn
         CellRangeAddress titleRegion = new CellRangeAddress(0, 0, 0, 12);
         sheet.addMergedRegion(titleRegion);
         applyBorderToMergedRegion(sheet, titleRegion, styles.get("datasetTitle"));
@@ -39,6 +41,7 @@ public class ExcelExporter {
     
         // Dòng 1: Nhóm tiêu đề
         Row groupRow = sheet.createRow(1);
+        groupRow.setHeightInPoints(30); // Tăng chiều cao cho font size lớn hơn
     
         // Runtime
         groupRow.createCell(1).setCellValue("Runtime (s)");
@@ -47,7 +50,7 @@ public class ExcelExporter {
         applyBorderToMergedRegion(sheet, runtimeRegion, styles.get("runtime"));
     
         // Memory
-        groupRow.createCell(4).setCellValue("Used Memory");
+        groupRow.createCell(4).setCellValue("Used Memory (MB)");
         CellRangeAddress memoryRegion = new CellRangeAddress(1, 1, 4, 6);
         sheet.addMergedRegion(memoryRegion);
         applyBorderToMergedRegion(sheet, memoryRegion, styles.get("memory"));
@@ -66,6 +69,7 @@ public class ExcelExporter {
     
         // Dòng 2: Tiêu đề thuật toán
         Row methodRow = sheet.createRow(2);
+        methodRow.setHeightInPoints(25); // Tăng chiều cao cho font size lớn hơn
         String[] titles = {"minSup", "Jaccard", "Dice", "Kulc", "Jaccard", "Dice", "Kulc", "Jaccard", "Dice", "Kulc", "Jaccard", "Dice", "Kulc"};
         for (int i = 0; i < titles.length; i++) {
             Cell cell = methodRow.createCell(i);
@@ -80,25 +84,28 @@ public class ExcelExporter {
     
     private static Map<String, CellStyle> createGroupStyles(XSSFWorkbook workbook) {
         Map<String, CellStyle> map = new HashMap<>();
-        map.put("runtime", createStyle(workbook, IndexedColors.ORANGE));
-        map.put("memory", createStyle(workbook, IndexedColors.CORAL));
-        map.put("pattern", createStyle(workbook, IndexedColors.LAVENDER));
-        map.put("candidates", createStyle(workbook, IndexedColors.ROSE));
-        map.put("default", createStyle(workbook, IndexedColors.GREY_25_PERCENT));
+        map.put("runtime", createStyle(workbook, IndexedColors.WHITE));
+        map.put("memory", createStyle(workbook, IndexedColors.WHITE));
+        map.put("pattern", createStyle(workbook, IndexedColors.WHITE));
+        map.put("candidates", createStyle(workbook, IndexedColors.WHITE));
+        map.put("default", createStyle(workbook, IndexedColors.WHITE));
         map.put("datasetTitle", createTitleStyle(workbook));
-        map.put("jaccard", createStyle(workbook, IndexedColors.LIGHT_TURQUOISE));
+        map.put("jaccard", createStyle(workbook, IndexedColors.WHITE));
 
         return map;
     }
 
     private static CellStyle createStyle(XSSFWorkbook workbook, IndexedColors color) {
         CellStyle style = workbook.createCellStyle();
-        style.setFillForegroundColor(color.getIndex());
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        // Bỏ màu fill
+        // style.setFillForegroundColor(color.getIndex());
+        // style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setWrapText(true); // Tự động xuống dòng
         Font font = workbook.createFont();
         font.setBold(true);
+        font.setFontHeightInPoints((short) 15); // Tăng font size lên 15
         style.setFont(font);
         style.setBorderTop(BorderStyle.THIN);
         style.setBorderBottom(BorderStyle.THIN);
@@ -109,15 +116,20 @@ public class ExcelExporter {
 
     private static CellStyle createTitleStyle(XSSFWorkbook workbook) {
         CellStyle style = workbook.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.GREY_50_PERCENT.getIndex());
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        // Bỏ hoàn toàn màu fill
+        // style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        // style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setWrapText(true); // Tự động xuống dòng
         Font font = workbook.createFont();
         font.setBold(true);
-        font.setFontHeightInPoints((short) 14);
-        font.setColor(IndexedColors.WHITE.getIndex());
+        font.setFontHeightInPoints((short) 16); // Title lớn hơn một chút
         style.setFont(font);
         style.setAlignment(HorizontalAlignment.CENTER);
         style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
         return style;
     }
 
@@ -133,6 +145,12 @@ public class ExcelExporter {
         defaultStyle.setBorderBottom(BorderStyle.THIN);
         defaultStyle.setBorderLeft(BorderStyle.THIN);
         defaultStyle.setBorderRight(BorderStyle.THIN);
+        defaultStyle.setWrapText(true); // Tự động xuống dòng
+        
+        // Thêm font size 15 cho default style
+        Font defaultFont = workbook.createFont();
+        defaultFont.setFontHeightInPoints((short) 15);
+        defaultStyle.setFont(defaultFont);
 
         // Style riêng cho từng thuật toán
         Map<String, CellStyle> algoStyles = new HashMap<>();
@@ -142,6 +160,7 @@ public class ExcelExporter {
 
         for (Map.Entry<Double, Map<String, ResultRow>> entry : summaryMap.entrySet()) {
             Row row = sheet.createRow(rowIdx++);
+            row.setHeightInPoints(30); // Tăng chiều cao cho font size lớn hơn
             int col = 0;
 
             // Ghi minSup
@@ -182,17 +201,29 @@ public class ExcelExporter {
     private static CellStyle createAlgoStyle(Workbook workbook, IndexedColors color, CellStyle baseStyle) {
         CellStyle style = workbook.createCellStyle();
         style.cloneStyleFrom(baseStyle);
-        style.setFillForegroundColor(color.getIndex());
-        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        // Bỏ màu fill
+        // style.setFillForegroundColor(color.getIndex());
+        // style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setWrapText(true); // Tự động xuống dòng
+        
+        // Đảm bảo font size 15 cho algo styles
+        Font algoFont = workbook.createFont();
+        algoFont.setFontHeightInPoints((short) 15);
+        style.setFont(algoFont);
+        
         return style;
     }
 
 
     private static void autoSizeColumns(XSSFSheet sheet, int columnCount) {
-        for (int i = 0; i < columnCount; i++) sheet.setColumnWidth(i, 14 * 256); // 14 characters
+        for (int i = 0; i < columnCount; i++) sheet.setColumnWidth(i, 12 * 256); // 12 characters
     }
 
     private static void drawChart(XSSFSheet sheet, int rowCount, String chartTitle, int colStart, int colEnd, int anchorColStart, int anchorRowStart) {
+        drawChart(sheet, rowCount, chartTitle, colStart, colEnd, anchorColStart, anchorRowStart, "VALUE");
+    }
+
+    private static void drawChart(XSSFSheet sheet, int rowCount, String chartTitle, int colStart, int colEnd, int anchorColStart, int anchorRowStart, String yAxisTitle) {
         XSSFDrawing drawing = sheet.createDrawingPatriarch();
         XSSFClientAnchor anchor = drawing.createAnchor(0, 0, 0, 0,
                 anchorColStart, anchorRowStart, anchorColStart + 4, anchorRowStart + 13);
@@ -208,7 +239,7 @@ public class ExcelExporter {
         bottomAxis.setTitle("MINSUP");
     
         XDDFValueAxis leftAxis = chart.createValueAxis(AxisPosition.LEFT);
-        leftAxis.setTitle("RUNTIME (s)");
+        leftAxis.setTitle(yAxisTitle);
     
         XDDFLineChartData data = (XDDFLineChartData) chart.createData(ChartTypes.LINE, bottomAxis, leftAxis);
     
@@ -223,6 +254,11 @@ public class ExcelExporter {
             XDDFLineChartData.Series series = (XDDFLineChartData.Series) data.addSeries(minSup, y);
             series.setTitle(names[i - colStart], null);
             series.setMarkerStyle(styles[(i - colStart) % styles.length]);
+            
+            // Bỏ màu fill cho line chart
+            if (series.getShapeProperties() != null) {
+                series.getShapeProperties().setFillProperties(new XDDFNoFillProperties());
+            }
         }
     
         chart.plot(data);
@@ -287,9 +323,14 @@ public class ExcelExporter {
 
             XDDFBarChartData.Series series = (XDDFBarChartData.Series) data.addSeries(minSup, ySeries);
             series.setTitle(names[i - colStart], null);
+            
+            // Bỏ màu fill cho bar chart
+            if (series.getShapeProperties() != null) {
+                series.getShapeProperties().setFillProperties(new XDDFNoFillProperties());
+            }
         }
 
-        data.setVaryColors(true);
+        data.setVaryColors(false); // Bỏ màu đa dạng
         chart.plot(data);
     }
 
@@ -305,8 +346,8 @@ public class ExcelExporter {
             int rowCount = entry.getValue().size();
             
             int chartStartRow = rowCount + 5;
-            drawChart(sheet, rowCount, "Runtime", 1, 4, 1, chartStartRow); // col 1,2,3
-            drawChart(sheet, rowCount, "Memory Usage", 4, 7, 6, chartStartRow); // col 4,5,6
+            drawChart(sheet, rowCount, "Runtime", 1, 4, 1, chartStartRow, "RUNTIME (s)"); // col 1,2,3
+            drawChart(sheet, rowCount, "Memory Usage", 4, 7, 6, chartStartRow, "MEMORY (MB)"); // col 4,5,6
             drawBarChart(sheet, rowCount, "Candidates Generated", 10, 13, 11, chartStartRow); // col 10,11,12
 
         }

@@ -9,8 +9,8 @@ public class Main {
 
         datasetConfigs.put("mushrooms.txt", new double[]{0.005, 0.01, 0.02, 0.03, 0.04, 0.05});
         datasetConfigs.put("retail.txt", new double[]{0.001, 0.002, 0.003, 0.004, 0.005, 0.006});
-        datasetConfigs.put("chess.txt", new double[]{0.6, 0.65, 0.7, 0.75, 0.8, 0.85});
-        datasetConfigs.put("kosarak.txt", new double[]{0.003, 0.004, 0.005, 0.006});
+        // datasetConfigs.put("chess.txt", new double[]{0.6, 0.65, 0.7, 0.75, 0.8, 0.85});
+        // datasetConfigs.put("kosarak.txt", new double[]{0.003, 0.004, 0.005, 0.006});
 
         Map<String, Map<Double, Map<String, ResultRow>>> allDatasetResults = new LinkedHashMap<>();
 
