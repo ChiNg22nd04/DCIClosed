@@ -9,8 +9,8 @@ public class Main {
 
         datasetConfigs.put("mushrooms.txt", new double[]{0.005, 0.01, 0.02, 0.03, 0.04, 0.05});
         datasetConfigs.put("retail.txt", new double[]{0.001, 0.002, 0.003, 0.004, 0.005, 0.006});
-        // datasetConfigs.put("chess.txt", new double[]{0.6, 0.65, 0.7, 0.75, 0.8, 0.85});
-        // datasetConfigs.put("kosarak.txt", new double[]{0.003, 0.004, 0.005, 0.006});
+        datasetConfigs.put("chess.txt", new double[]{0.6, 0.65, 0.7, 0.75, 0.8, 0.85});
+        datasetConfigs.put("kosarak.txt", new double[]{0.003, 0.004, 0.005, 0.006});
 
         Map<String, Map<Double, Map<String, ResultRow>>> allDatasetResults = new LinkedHashMap<>();
 
@@ -33,6 +33,14 @@ public class Main {
             System.out.println("✅ Đã load " + database.size() + " transactions");
             analyzeDataset(database, datasetName);
 
+            // ✅ FORCE GC và reset memory cho dataset mới
+            System.gc();
+            try {
+                Thread.sleep(500); // Đợi GC hoàn tất cho dataset mới
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
             // Khởi tạo các độ đo tương đồng
             JaccardSimilarity jaccard = new JaccardSimilarity(database);
             DiceSimilarity dice = new DiceSimilarity();
@@ -51,6 +59,14 @@ public class Main {
 
                 summaryMap.putIfAbsent(minSupRatio, new LinkedHashMap<>());
 
+                // ✅ Force GC trước khi bắt đầu minSup mới
+                System.gc();
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+
                 // ✅ SỬA LỖI: Chạy RIÊNG BIỆT cho từng thuật toán
                 for (int i = 0; i < measures.size(); i++) {
                     SimilarityMeasure sim = measures.get(i);
@@ -58,12 +74,17 @@ public class Main {
                     System.out.printf("   ▶ Thuật toán: %s\n", name);
 
                     try {
-                        // ✅ QUAN TRỌNG: Tạo riêng instance cho mỗi thuật toán
-                        System.gc();
-                        Thread.sleep(100);
-
+                        // ✅ QUAN TRỌNG: Reset hoàn toàn memory state cho từng thuật toán
+                        for (int gc = 0; gc < 5; gc++) {
+                            System.gc();
+                            Thread.sleep(100);
+                        }
+                        
                         Runtime runtime = Runtime.getRuntime();
-                        long beforeMem = runtime.totalMemory() - runtime.freeMemory();
+                        
+                        // ✅ Đo memory baseline riêng cho từng thuật toán
+                        long baselineMem = runtime.totalMemory() - runtime.freeMemory();
+                        System.out.printf("     🔍 Baseline memory: %.2fMB\n", baselineMem / (1024.0 * 1024.0));
 
                         // ✅ Đo từng bước riêng biệt
                         long totalStart = System.currentTimeMillis();
@@ -82,6 +103,9 @@ public class Main {
                             continue;
                         }
 
+                        // ✅ Đo memory sau mining (không force GC để giữ memory peak)
+                        long afterMiningMem = runtime.totalMemory() - runtime.freeMemory();
+
                         // ✅ Lấy riêng candidates cho từng thuật toán
                         int miningCandidates = miner.getCandidatesGenerated();
 
@@ -97,13 +121,18 @@ public class Main {
 
                         long totalEnd = System.currentTimeMillis();
 
-                        // Đo memory sau khi hoàn thành
-                        System.gc();
-                        Thread.sleep(100); // Cho phép GC hoàn tất
-                        long afterMem = runtime.totalMemory() - runtime.freeMemory();
+                        // ✅ Đo memory cuối cùng (memory peak)
+                        long finalMem = runtime.totalMemory() - runtime.freeMemory();
 
-                        // ✅ Tính toán metrics riêng biệt cho từng thuật toán
-                        double usedMemMb = Math.max(0, (afterMem - beforeMem) / (1024.0 * 1024.0));
+                        // ✅ Tính toán memory usage: lấy peak memory usage
+                        long peakMemoryUsage = Math.max(afterMiningMem, finalMem) - baselineMem;
+                        double usedMemMb = Math.max(0, peakMemoryUsage) / (1024.0 * 1024.0);
+                        
+                        System.out.printf("     📊 Memory details: Mining=%.2fMB, Final=%.2fMB, Peak Usage=%.2fMB\n", 
+                                (afterMiningMem - baselineMem) / (1024.0 * 1024.0),
+                                (finalMem - baselineMem) / (1024.0 * 1024.0),
+                                usedMemMb);
+                        
                         long totalRuntimeMs = totalEnd - totalStart;
                         long miningTime = miningEnd - miningStart;
                         long filterTime = filterEnd - filterStart;
@@ -126,7 +155,8 @@ public class Main {
                         System.out.printf("     ✅ Closed: %d, Filtered: %d\n", closed.size(), filtered.size());
                         System.out.printf("     ⏱️ Mining: %.3fs, Filter: %.3fs, Total: %.3fs\n",
                                 miningTime/1000.0, filterTime/1000.0, totalRuntimeMs/1000.0);
-                        System.out.printf("     💾 Memory: %.2fMB\n", usedMemMb);
+                        System.out.printf("     💾 Memory: %.2fMB (Peak: %.2fMB)\n", usedMemMb, 
+                                Math.max(afterMiningMem, finalMem) / (1024.0 * 1024.0));
                         System.out.printf("     🔢 Mining candidates: %d, Similarity comparisons: %d, Total: %d\n",
                                 miningCandidates, similarityComparisons, totalCandidates);
 
