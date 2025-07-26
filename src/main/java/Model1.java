@@ -12,10 +12,10 @@ public class Model1 {
 
         // Cấu hình minSim riêng cho từng dataset
         Map<String, double[]> minSimConfigs = new LinkedHashMap<>();
-        minSimConfigs.put("mushrooms.txt", new double[]{0.1, 0.2,0.3, 0.4, 0.5, 0.6, 0.7, 0.8});
-        minSimConfigs.put("retail.txt", new double[]{0.1, 0.2,0.3, 0.4, 0.5, 0.6, 0.7, 0.8});
-        minSimConfigs.put("chess.txt", new double[]{0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0});
-        minSimConfigs.put("kosarak.txt", new double[]{0.1, 0.2,0.3, 0.4, 0.5, 0.6, 0.7, 0.8});
+        minSimConfigs.put("mushrooms.txt", new double[]{0.3, 0.4, 0.5, 0.6, 0.7, 0.8});
+        minSimConfigs.put("retail.txt", new double[]{0.3, 0.4, 0.5, 0.6, 0.7, 0.8});
+        minSimConfigs.put("chess.txt", new double[]{0.5, 0.6, 0.7, 0.8, 0.9, 1.0});
+        minSimConfigs.put("kosarak.txt", new double[]{0.3, 0.4, 0.5, 0.6, 0.7, 0.8});
 
         Map<String, Map<Double, Map<String, ResultRow>>> allDatasetResults = new LinkedHashMap<>();
 
@@ -63,6 +63,10 @@ public class Model1 {
 
                     try {
                         Runtime runtime = Runtime.getRuntime();
+                        
+                        // Cải thiện đo memory: chạy garbage collection trước khi đo baseline
+                        System.gc();
+                        Thread.sleep(100); // Đợi GC hoàn thành
                         long baselineMem = runtime.totalMemory() - runtime.freeMemory();
                         long totalStart = System.currentTimeMillis();
 
@@ -92,8 +96,16 @@ public class Model1 {
                         long totalEnd = System.currentTimeMillis();
                         long finalMem = runtime.totalMemory() - runtime.freeMemory();
 
-                        long peakMemoryUsage = Math.max(afterMiningMem, finalMem) - baselineMem;
-                        double usedMemMb = Math.max(0, peakMemoryUsage) / (1024.0 * 1024.0);
+                        // Cải thiện tính toán memory: dùng tổng memory được allocated thay vì peak usage
+                        long maxMem = Math.max(afterMiningMem, finalMem);
+                        long actualMemoryUsage = maxMem - baselineMem;
+                        
+                        // Nếu actualMemoryUsage âm (do GC), tính bằng cách khác
+                        if (actualMemoryUsage < 0) {
+                            actualMemoryUsage = maxMem > 0 ? maxMem : runtime.totalMemory() * 1024 * 1024; // Fallback
+                        }
+                        
+                        double usedMemMb = actualMemoryUsage / (1024.0 * 1024.0);
 
                         long totalRuntimeMs = totalEnd - totalStart;
                         long miningTime = miningEnd - miningStart;
@@ -133,7 +145,7 @@ public class Model1 {
         // Export kết quả
         if (!allDatasetResults.isEmpty()) {
             try {
-                ExcelExporter.exportMultipleSheetsSummary(allDatasetResults, "All_Datasets_Summary_Model1.xlsx");
+                ExcelExporter.exportModel1Summary(allDatasetResults, "All_Datasets_Summary_Model1.xlsx");
                 System.out.println("\n✅ Đã xuất toàn bộ kết quả vào file All_Datasets_Summary_Model1.xlsx");
             } catch (Exception e) {
                 System.err.println("❌ Lỗi xuất file: " + e.getMessage());

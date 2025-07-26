@@ -133,7 +133,7 @@ public class Model2 {
 
         if (!allDatasetResults.isEmpty()) {
             try {
-                ExcelExporter.exportMultipleSheetsSummary(allDatasetResults, "All_Datasets_Summary_Model2.xlsx");
+                ExcelExporter.exportModel2Summary(allDatasetResults, "All_Datasets_Summary_Model2.xlsx");
                 System.out.println("\n✅ Đã xuất toàn bộ kết quả vào file All_Datasets_Summary_Model2.xlsx");
                 generateSummaryStatistics(allDatasetResults);
             } catch (Exception e) {
