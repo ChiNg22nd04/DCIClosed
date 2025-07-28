@@ -537,12 +537,20 @@ public class ExcelExporter {
         int firstRow = 3;
         int lastRow = firstRow + rowCount - 1;
 
-        // Tạo category labels 
+        // Tạo category labels với 2 điểm 0 ở hai đầu cho chart
         List<String> categoryLabels = new ArrayList<>();
+        
+        // Thêm điểm 0.0 ở đầu
+        categoryLabels.add("0.0");
+        
+        // Thêm dữ liệu thực từ table
         for (int r = firstRow; r <= lastRow; r++) {
             Cell cell = sheet.getRow(r).getCell(0);
             categoryLabels.add(cell.toString());
         }
+        
+        // Thêm điểm 1.0 ở cuối
+        categoryLabels.add("1.0");
 
         XDDFDataSource<String> minSim = XDDFDataSourcesFactory.fromArray(
                 categoryLabels.toArray(new String[0])
@@ -560,12 +568,19 @@ public class ExcelExporter {
         for (int i = colStart; i < colEnd; i++) {
             List<Double> yValues = new ArrayList<>();
 
+            // Thêm giá trị 0 ở đầu (cho minSim = 0.0)
+            yValues.add(1.0); // Đặt 1.0 thay vì 0 để tránh lỗi với thang logarith
+
+            // Thêm dữ liệu thực từ table
             for (int r = firstRow; r <= lastRow; r++) {
                 Cell cell = sheet.getRow(r).getCell(i);
                 double value = cell != null ? cell.getNumericCellValue() : 0.0;
                 // Đảm bảo giá trị >= 1 cho thang logarith, nếu 0 thì set thành 1
                 yValues.add(value > 0 ? value : 1.0);
             }
+            
+            // Thêm giá trị 0 ở cuối (cho minSim = 1.0)
+            yValues.add(1.0); // Đặt 1.0 thay vì 0 để tránh lỗi với thang logarith
 
             XDDFNumericalDataSource<Double> ySeries = XDDFDataSourcesFactory.fromArray(
                     yValues.toArray(new Double[0]), null
